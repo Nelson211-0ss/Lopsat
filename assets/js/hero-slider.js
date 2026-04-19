@@ -1,46 +1,18 @@
 (function () {
   /**
-   * Folder segment before /assets/js/hero-slider.js — fixes images on cPanel when the site lives in a
-   * subdirectory (e.g. /lopsatservices/) but <img> still uses root /file.jpg. data-base-path overrides.
-   */
-  function heroDirectoryBase() {
-    var raw = document.documentElement.getAttribute("data-base-path");
-    if (raw != null && String(raw).trim() !== "") {
-      var seg = String(raw).trim().replace(/^\/+/, "").replace(/\/+$/, "");
-      return seg ? "/" + seg : "";
-    }
-    if (typeof document === "undefined" || !document.getElementsByTagName) return "";
-    var scripts = document.getElementsByTagName("script");
-    for (var i = 0; i < scripts.length; i++) {
-      var src = scripts[i].src;
-      if (!src || src.indexOf("hero-slider.js") === -1) continue;
-      try {
-        var pathname = new URL(src, window.location.href).pathname;
-        var marker = "/assets/js/hero-slider.js";
-        var pos = pathname.lastIndexOf(marker);
-        if (pos === -1) continue;
-        return pathname.slice(0, pos);
-      } catch (err) {
-        continue;
-      }
-    }
-    return "";
-  }
-
-  /**
-   * Absolute-from-host paths on http(s). file:// uses same-folder filenames for local preview.
+   * Resolve image paths from the document’s base URL (index.html in public_html or a subfolder).
+   * Avoids brittle string joins that can break on cPanel (trailing slashes, subpaths, proxies).
    */
   function heroAssetUrl(path) {
     var name = String(path).replace(/^\//, "");
-    var http =
-      typeof location !== "undefined" &&
-      location.protocol &&
-      /^https?:$/i.test(location.protocol);
-    if (!http) return name;
-    var base = heroDirectoryBase().replace(/^\/+|\/+$/g, "");
-    /* Document-relative filename when the site folder is the web root (avoids /img.jpg → domain root on cPanel subfolders). */
-    if (!base) return name;
-    return "/" + base + "/" + name;
+    try {
+      if (typeof document !== "undefined" && document.baseURI) {
+        return new URL(name, document.baseURI).href;
+      }
+    } catch (err) {
+      /* ignore */
+    }
+    return name;
   }
 
   var slides = [
@@ -133,9 +105,7 @@
         el.style.transitionDuration = "1100ms";
         el.style.transitionTimingFunction = "ease-in-out";
       }
-      /* Quoted url() + minimal escaping keeps filenames with special chars safe in CSS. */
-      el.style.backgroundImage =
-        'url("' + String(heroAssetUrl(s.image)).replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '")';
+      el.style.backgroundImage = "url(" + JSON.stringify(heroAssetUrl(s.image)) + ")";
       el.style.opacity = i === 0 ? "1" : "0";
       el.setAttribute("aria-hidden", i === 0 ? "false" : "true");
       root.appendChild(el);
