@@ -133,7 +133,9 @@
         el.style.transitionDuration = "1100ms";
         el.style.transitionTimingFunction = "ease-in-out";
       }
-      el.style.backgroundImage = "url('" + heroAssetUrl(s.image).replace(/'/g, "\\'") + "')";
+      /* Quoted url() + minimal escaping keeps filenames with special chars safe in CSS. */
+      el.style.backgroundImage =
+        'url("' + String(heroAssetUrl(s.image)).replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '")';
       el.style.opacity = i === 0 ? "1" : "0";
       el.setAttribute("aria-hidden", i === 0 ? "false" : "true");
       root.appendChild(el);

@@ -1,0 +1,21 @@
+# Lopsat static site — Apache / cPanel (place alongside index.html in public_html)
+Options -Indexes
+AddDefaultCharset UTF-8
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()"
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType image/svg+xml .svg
+  AddType application/javascript .js
+  AddType text/css .css
+</IfModule>
+
+# Block common sensitive paths if present in the web root
+<IfModule mod_alias.c>
+  RedirectMatch 404 /\.git
+</IfModule>
